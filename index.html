@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>古代作家與作品閃卡特訓班 (精準原文填空版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700;900&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Serif TC', serif;
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            min-height: 100vh;
+            color: #1e293b;
+            margin: 0;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            box-shadow: 0 14px 44px 0 rgba(31, 38, 135, 0.16);
+        }
+        .target-char {
+            color: #1e3a8a;
+            font-weight: 900;
+            border-bottom: 5px solid #4f46e5;
+            padding-bottom: 4px;
+            display: inline-block;
+        }
+        /* 一般考點填空槽 (朝代、字號、世稱、並稱、稱譽) */
+        .cloze-blank {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-indent: 0 !important;
+            padding: 1px 10px;
+            margin: 2px 3px;
+            border-bottom: 3px solid #6366f1;
+            background-color: #eef2ff;
+            color: #4f46e5;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.18s ease;
+            vertical-align: baseline;
+            text-align: center;
+            font-weight: 900;
+            line-height: 1.5;
+        }
+        .cloze-blank:hover {
+            background-color: #e0e7ff;
+        }
+        .cloze-blank.revealed {
+            background-color: #dcfce7;
+            border-bottom: 3px solid #16a34a;
+            color: #14532d;
+            font-weight: 900;
+        }
+        /* 作品與文集填空槽 《...》 */
+        .cloze-work {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-indent: 0 !important;
+            padding: 1px 8px;
+            margin: 2px 3px;
+            border-bottom: 3px solid #4f46e5;
+            background-color: #e0e7ff;
+            color: #4338ca;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.18s ease;
+            vertical-align: baseline;
+            text-align: center;
+            font-weight: 900;
+            line-height: 1.5;
+        }
+        .cloze-work:hover {
+            background-color: #c7d2fe;
+        }
+        .cloze-work.revealed {
+            background-color: #dbeafe;
+            border-bottom: 3px solid #1d4ed8;
+            color: #1e3a8a;
+            font-weight: 900;
+        }
+        .btn-hover {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+        }
+        .btn-hover:active {
+            transform: scale(0.96);
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-3 sm:p-6 md:p-8">
+
+    <div id="app" class="glass-card w-full max-w-3xl rounded-3xl p-5 sm:p-8 md:p-10 flex flex-col items-center relative overflow-hidden fade-in">
+        
+        <!-- 頂部標題與範圍選擇 -->
+        <div class="w-full flex flex-col sm:flex-row justify-between items-center gap-3 mb-6 border-b border-indigo-200/80 pb-4">
+            <div class="flex items-center gap-2">
+                <h1 class="text-xl md:text-2xl font-black tracking-widest text-indigo-950">
+                    ✒️ 古代作家與作品閃卡特訓
+                </h1>
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-2">
+                <select id="deck-selector" onchange="changeDeck()" class="text-xs md:text-sm font-bold bg-white border border-indigo-200 text-indigo-900 rounded-full px-3.5 py-1.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 cursor-pointer">
+                    <option value="EXAM_ALL">🎯 測驗指定總範圍 (全42位)</option>
+                    <option value="SUI_TANG">📘 P169-174 隋唐五代十國 (35位)</option>
+                    <option value="PROSE_9">📗 P158-160 韓柳與北宋古文名家 (9位)</option>
+                    <option value="BOOK_ALL">📚 課本同頁全收錄含擴充 (58位)</option>
+                </select>
+                <div class="text-sm font-bold bg-indigo-100/90 px-4 py-1.5 rounded-full shadow-sm text-indigo-900 whitespace-nowrap">
+                    剩餘作家: <span id="progress-text" class="text-rose-600 font-black text-base ml-0.5">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 閃卡主體區 -->
+        <div id="flashcard-area" class="w-full flex flex-col items-center mb-6 fade-in">
+            
+            <!-- 作家標題區 (正面) -->
+            <div class="w-full text-center mb-5">
+                <div class="flex items-center justify-center gap-2 mb-3">
+                    <span id="period-badge" class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-bold tracking-wider">
+                        測驗範圍
+                    </span>
+                    <span id="status-badge" class="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold tracking-wider">
+                        🔒 填空待作答（可點擊單格偷看或按下方顯示答案）
+                    </span>
+                </div>
+
+                <!-- 作家姓名 (帶標準底線) 與生卒年 -->
+                <div class="py-2">
+                    <span id="author-name" class="target-char text-4xl sm:text-5xl md:text-6xl tracking-widest select-none">
+                        作家
+                    </span>
+                </div>
+                <p id="author-years" class="text-slate-500 text-sm sm:text-base font-bold mt-1 tracking-wider">
+                    （生卒年）
+                </p>
+            </div>
+
+            <!-- 統一課本原文重點填空區 (包含所有朝代、字號、世稱、並稱、文學地位與作品) -->
+            <div class="w-full bg-white/95 border border-indigo-200/90 rounded-2xl p-5 sm:p-7 shadow-md text-left">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-2 border-b border-slate-100">
+                    <span class="text-xs sm:text-sm font-black text-indigo-900 tracking-wider">
+                        📝 課本原文重點填空（出生地保留不考；點擊單一空格可單獨翻開）
+                    </span>
+                    <div class="flex items-center gap-3 text-xs font-bold">
+                        <span class="inline-flex items-center gap-1 text-emerald-700">
+                            <span class="w-2.5 h-2.5 rounded-sm bg-emerald-200 border border-emerald-600 inline-block"></span> 朝代／字號／並稱／地位
+                        </span>
+                        <span class="inline-flex items-center gap-1 text-blue-700">
+                            <span class="w-2.5 h-2.5 rounded-sm bg-blue-200 border border-blue-600 inline-block"></span> 《代表作／文集》
+                        </span>
+                    </div>
+                </div>
+                <div id="full-text-cloze" class="text-base sm:text-lg md:text-xl text-slate-800 leading-loose font-medium tracking-wide">
+                    <!-- 挖空原文將動態渲染於此 -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 互動按鈕區 -->
+        <div id="action-buttons" class="w-full flex flex-col sm:flex-row gap-3.5 justify-center fade-in">
+            <!-- 顯示答案按鈕 -->
+            <button id="btn-reveal" onclick="showAnswer()" class="btn-hover w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg text-lg sm:text-xl border border-indigo-500 cursor-pointer tracking-widest">
+                顯示全部答案 (Space)
+            </button>
+
+            <!-- 自我評估按鈕 (預設隱藏) -->
+            <button id="btn-remembered" onclick="handleEvaluation(true)" class="hidden btn-hover flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg text-lg sm:text-xl border border-emerald-400 cursor-pointer tracking-wider">
+                ✅ 完全記得
+            </button>
+            <button id="btn-forgot" onclick="handleEvaluation(false)" class="hidden btn-hover flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold py-4 rounded-2xl shadow-lg text-lg sm:text-xl border border-rose-400 cursor-pointer tracking-wider">
+                ❌ 有遺漏 / 記錯了
+            </button>
+        </div>
+
+        <!-- 本輪結算與錯題循環畫面 (預設隱藏) -->
+        <div id="result-area" class="w-full hidden flex-col items-center py-8 fade-in text-center">
+            <div id="result-icon" class="text-7xl mb-5 drop-shadow-sm">🏆</div>
+            <h2 id="result-title" class="text-3xl md:text-4xl font-black text-indigo-950 mb-4 tracking-wider">
+                本輪特訓結束！
+            </h2>
+            <p id="result-desc" class="text-base sm:text-lg md:text-xl text-slate-700 mb-8 leading-relaxed font-medium"></p>
+            <button id="result-btn" onclick="startNextRound()" class="btn-hover bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-12 rounded-2xl shadow-lg text-xl cursor-pointer tracking-widest">
+                繼續特訓
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        /**
+         * 課本作家與作品完整校對題庫
+         * 語法規則：
+         * - [考點內容] -> 轉換為綠色屬性填空槽（朝代、流派、字、號、諡號、世稱、並稱、文學地位與口號）
+         * - 《作品或文集》 -> 自動轉換為藍色作品填空槽
+         * - 所有出生地、古今地名、生平背景故事一律保留明文，絕不挖空！
+         */
+        const rawAuthors = [
+            // ==================== 一、P169-174 隋唐五代十國作家 (共 35 位) ====================
+            {
+                name: "魏徵",
+                years: "580—643",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[玄成]，巨鹿（今屬河北）人。[唐初]政治家。少時孤貧，出家為道士。隋末參加瓦崗起義軍，降唐後太宗即位，擢為[諫議大夫]，前後陳諫二百餘事。貞觀三年（629）任秘書監，主持校定秘府圖籍，後封[鄭國公]。曾提出「[兼聽則明，偏信則暗]」，多次勸唐太宗以隋亡為鑑，認為君好比舟，民好比水，「[水能載舟，亦能覆舟]」，必須「[居安思危，戒奢以儉]」「薄賦斂，輕租稅」。著有《隋書》的序論，《梁書》《陳書》《北齊書》的總論，主編有《群書治要》，名篇有《諫太宗十思疏》《十漸不克終疏》。"
+            },
+            {
+                name: "杜審言",
+                years: "約 645—708",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[必簡]，祖籍襄陽（今屬湖北），是大詩人[杜甫]的祖父。[初唐]時期的一位重要詩人，是[唐]代「[近體詩]」的奠基人之一。少與[李嶠]、[崔融]、[蘇味道]齊名，並稱「[文章四友]」。作品多樸素自然。有《杜審言詩集》。"
+            },
+            {
+                name: "楊炯",
+                years: "650—？",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "華陰（今屬陝西）人，[唐]代詩人。與[王勃]、[盧照鄰]、[駱賓王]齊名，並稱「[初唐四傑]」。楊炯以[邊塞征戰]詩著名，《從軍行》《出塞》《戰城南》《紫騮馬》等比較有名。有《盈川集》。"
+            },
+            {
+                name: "王勃",
+                years: "約 650—676",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[子安]，絳州龍門（今山西河津）人。[唐]代文學家。他才華早露，與[楊炯]、[盧照鄰]、[駱賓王]以文辭齊名，並稱「[王楊盧駱]」，亦稱「[初唐四傑]」。後因擅殺官奴而犯罪，其父亦受連累被貶為交趾令，王勃南下探親，落水而亡。其詩作題材較廣泛，意境開闊，風格清新，代表作有《送杜少府之任蜀州》。王勃的賦、序、表、碑、頌等文，多為[駢體]，代表作有《滕王閣序》。著有《王子安集》。"
+            },
+            {
+                name: "賀知章",
+                years: "659—約 744",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[季真]，自號[四明狂客]，[唐]代詩人，越州永興（今浙江杭州）人。少時就以詩文知名，武則天證聖元年（695）中乙未科狀元，後歷任禮部侍郎、秘書監、太子賓客等職。為人曠達不羈，有「[清談風流]」之譽。與[張若虛]、[張旭]、[包融]合稱「[吳中四士]」。其詩文以[絕句]見長，著名的有《詠柳》《回鄉偶書》，作品大多散佚。"
+            },
+            {
+                name: "張若虛",
+                years: "約 660—約 720",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "揚州（今屬江蘇）人，[唐]代詩人。與[賀知章]、[張旭]、[包融]並稱「[吳中四士]」。其詩在[初唐]詩風轉變中有重要地位。他一生只留下[兩]首詩，其中《春江花月夜》乃千古絕唱，有「[以孤篇壓倒全唐]」之譽，被聞一多譽為「[詩中的詩，頂峰上的頂峰]」。"
+            },
+            {
+                name: "陳子昂",
+                years: "661—702",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[伯玉]，梓州射洪（今屬四川）人，[唐]代文學家、詩人。少任俠，文明進士。以上書論政，為武則天所贊賞，拜麟台正字，轉[右拾遺]（世稱[陳拾遺]）。陳子昂於詩標舉[漢魏風骨]，強調[興寄]，反對柔靡之風，是[唐]代詩歌革新的先驅。其詩風骨崢嶸，寓意深遠，蒼勁有力。名篇有《登幽州台歌》《登澤州城北樓宴》等。"
+            },
+            {
+                name: "張九齡",
+                years: "673 或 678—740",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[子壽]，一名[博物]，韶州曲江（今廣東韶關）人。[唐]代政治家、文學家、詩人，被譽為「[嶺南第一人]」。其[五言古詩]對掃除唐初沿襲的六朝綺靡詩風貢獻尤大，名詩有《感遇》《望月懷遠》等。有《曲江集》。"
+            },
+            {
+                name: "王之渙",
+                years: "688—742",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[季凌]，晉陽（今山西太原）人。[唐]代詩人。性格豪放不羈，常擊劍悲歌，其詩多被當時樂工制曲歌唱。他常與[高適]、[王昌齡]等相唱和，以善於描寫[邊塞風光]著稱。代表作有《登鸛雀樓》《涼州詞》等。"
+            },
+            {
+                name: "孟浩然",
+                years: "689—740",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "襄陽（今屬湖北）人。世稱[孟襄陽]。因他未曾入仕，又稱為[孟山人]。[唐]代著名的[山水田園]詩人，與[王維]並稱「[王孟]」。早年隱居鹿門山，40歲時游長安，應進士不第。孟詩絕大部分為[五言短篇]，多寫[山水田園]和隱居的逸興以及羈旅行役的心情。代表作有《春曉》《望洞庭湖贈張丞相》《過故人莊》《宿建德江》等。有《孟浩然集》。"
+            },
+            {
+                name: "李頎",
+                years: "？—約 753",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "祖籍趙郡（今河北趙縣），長期居住在潁陽（今河南登封），[唐]代詩人。曾任新鄉縣尉，晚年隱居。其詩內容豐富，格調高昂，各體兼擅，[七言歌行]尤具特色。代表作有[邊塞]詩《古意》《古從軍行》。"
+            },
+            {
+                name: "王昌齡",
+                years: "？—約 756",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[少伯]，京兆長安（今陝西西安）人。[唐]代詩人。擅長[七絕]，多寫當時[邊塞]軍旅生活，氣勢雄渾，格調高昂，被後人稱為「[七絕聖手]」。《從軍行》7首、《芙蓉樓送辛漸》和《出塞》二首都很有名的。"
+            },
+            {
+                name: "王維",
+                years: "約 701—761",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[摩詰]，河東（治所在今山西永濟西）人。開元進士，官至尚書右丞，世稱「[王右丞]」。[唐]代[山水田園]詩人、畫家。中年以後居藍田輞川，過著亦官亦隱的優游生活。王維精通詩、書、畫、樂等，詩尤長[五言]，多詠[山水田園]，與[孟浩然]並稱「[王孟]」，有「[詩佛]」之稱。蘇軾評價：「味摩詰之詩，[詩中有畫]；觀摩詰之畫，[畫中有詩]。」代表作有《相思》《山居秋暝》等。有《王右丞集》。"
+            },
+            {
+                name: "李白",
+                years: "701—762",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[太白]，號[青蓮居士]，自稱祖籍隴西成紀（今甘肅靜寧西南），出生於西域，幼時隨父遷居綿州昌隆（今四川江油）。[唐]代[浪漫主義]詩人，有「[詩仙]」之稱。天寶初供奉翰林（官至[翰林供奉]）。性格傲岸，不為權貴所容，寫下了許多抨擊帝王權貴荒淫奢侈和控訴現實政治黑暗的詩篇。他是繼[屈原]之後我國又一傑出的[浪漫主義]詩人，詩風雄奇豪放，想象豐富。他和[杜甫]齊名，人稱「[李杜]」。杜甫曾說他「[筆落驚風雨，詩成泣鬼神]」。五絕《靜夜思》《秋浦歌》、七絕《望天門山》、五律《送友人》、七古《夢遊天姥吟留別》《行路難》《將進酒》，均為千古名篇。有《李太白全集》。"
+            },
+            {
+                name: "崔顥",
+                years: "？—754",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "汴州（今河南開封）人，開元進士，官至司勳員外郎。[唐]代詩人，所作[邊塞]詩慷慨豪邁。《黃鶴樓》（[七律]）甚得[李白]推崇。後人輯有《崔顥集》。"
+            },
+            {
+                name: "高適",
+                years: "約 700—765",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[達夫]，一字[仲武]，[唐]代[邊塞]詩人。詩作對當時的邊塞形勢和士兵疾苦均有反映，與[岑參]並稱「[高岑]」。筆力雄健，氣勢奔放。後人又把[高適]、[岑參]、[王昌齡]、[王之渙]合稱「[邊塞四詩人]」。代表作有《燕歌行》（《燕歌行並序》）。有《高常侍集》。"
+            },
+            {
+                name: "杜甫",
+                years: "712—770",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[子美]，曾居長安城南少陵以西，自稱[少陵野老]，世稱「[杜少陵]」，出生於鞏縣（今河南鞏義西）。[唐]代[現實主義]詩人。曾漫遊各地，寓居長安近十年，「安史之亂」中被俘，逃出後任[左拾遺]，後移家成都，築草堂於浣花溪畔，世稱「[浣花草堂]」。一度任劍南節度使參謀，檢校工部員外郎，故世稱「[杜工部]」。其作品顯示了唐由盛轉衰的歷史過程，被稱為「[詩史]」。以古體、律詩見長，風格以[沉鬱頓挫]為主，有「[詩聖]」之譽。有《杜工部集》。代表作有《自京赴奉先縣詠懷五百字》《登高》，組詩「[三吏]」「[三別]」。"
+            },
+            {
+                name: "岑參",
+                years: "約 715—770",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "荊州江陵（今屬湖北）人，官至嘉州刺史。[唐]代[邊塞]詩人。從軍多年，對邊塞風光、軍旅生活，以及少數民族的文化風俗有切身感受，風格與[高適]相近，後人多並稱「[高岑]」。有《岑嘉州詩集》。代表作有《白雪歌送武判官歸京》。"
+            },
+            {
+                name: "韋應物",
+                years: "約 737—791",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "京兆萬年（今陝西西安）人。[唐]代詩人，後人每以「[王孟韋柳]」並稱。因做過蘇州刺史，世稱「[韋蘇州]」。其[山水]詩清新自然、恬淡高遠，以善於寫景和隱逸生活著稱，後漸為反映民間疾苦的政治詩。代表作有《觀田家》《滁州西澗》。"
+            },
+            {
+                name: "孟郊",
+                years: "751—814",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[東野]，湖州武康（今浙江德清）人。[唐]代詩人。一生潦倒失意，性格孤直，不肯隨波逐流。其詩感傷遭遇，多寒苦之音，用字造句力避平庸淺率，追求瘦硬。後人以[孟郊]、[賈島]為[苦吟詩人]的代表，蘇軾稱之為「[郊寒島瘦]」。詩作有《遊子吟》。有《孟東野詩集》。"
+            },
+            {
+                name: "韓愈",
+                years: "768—824",
+                groups: ["EXAM_ALL", "SUI_TANG", "PROSE_9", "BOOK_ALL"],
+                badge: "P158-160 古文名家 / P169-174 唐代",
+                text: "字[退之]，河陽（今河南孟州）人，自謂郡望（郡裡的顯貴家族）昌黎，世稱「[韓昌黎]」；諡號[文]，又稱[韓文公]；官至吏部侍郎，又稱「[韓吏部]」。[唐]代散文家、詩人，與[柳宗元]同為「[古文運動]」的倡導者，反對六朝以來浮華的文風，主張「[文以明道]」「[惟陳言之務去]」。他的散文語言質樸，風格剛健，氣勢雄壯，蘇軾稱他「[文起八代之衰]」，後世尊他為「[唐宋八大家]」之首。有《昌黎先生集》。"
+            },
+            {
+                name: "劉禹錫",
+                years: "772—842",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[夢得]，洛陽（今河南洛陽）人。[唐]代詩人。因參加王叔文革新集團，失敗後被貶為朗州司馬，後任太子賓客，加檢校禮部尚書，世稱[劉賓客]。詩歌創作與[柳宗元]齊名，並稱「[劉柳]」；晚年和[白居易]唱和，世稱「[劉白]」。《陋室銘》託物言志；《竹枝詞》《楊柳枝詞》等組詩別開生面。名句「[沉舟側畔千帆過，病樹前頭萬木春]」出自《酬樂天揚州初逢席上見贈》，深寓哲理，膾炙人口。有《劉夢得文集》。"
+            },
+            {
+                name: "白居易",
+                years: "772—846",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[樂天]，晚年自號[香山居士]，曾為太子少傅，又稱[白太傅]。其先祖太原（今山西太原）人，後遷居下邽（今陝西渭南），生於新鄭（今屬河南）。[唐]代偉大的[現實主義]詩人，元和年間因得罪權貴被貶為[江州司馬]。他是[新樂府運動]的倡導者，主張「[文章合為時而著，歌詩合為事而作]」。與[元稹]共同倡導「[新樂府運動]」，世稱「[元白]」；晚年與[劉禹錫]唱和甚多，人稱「[劉白]」。其詩通俗易懂，有「[詩魔]」和「[詩王]」之稱。有諷喻詩《秦中吟》《新樂府》，長篇敘事詩《長恨歌》《琵琶行並序》，還有《賣炭翁》《錢塘湖春行》等。有《白氏長慶集》。"
+            },
+            {
+                name: "柳宗元",
+                years: "773—819",
+                groups: ["EXAM_ALL", "SUI_TANG", "PROSE_9", "BOOK_ALL"],
+                badge: "P158-160 古文名家 / P169-174 唐代",
+                text: "字[子厚]，河東（今山西永濟西）人，世稱「[柳河東]」，因參加政治革新失敗被貶為永州司馬，又遷柳州刺史，世稱「[柳柳州]」。[唐]代文學家，與[韓愈]倡導「[古文運動]」，為「[唐宋八大家]」之一。有論說文《天說》《封建論》，傳記文《段太尉逸事狀》《童區寄傳》，雜文《捕蛇者說》，寓言散文「[三戒]」（《黔之驢》《臨江之麋》《永某氏之鼠》），山水遊記「[永州八記]」。《小石潭記》為「[永州八記]」之一。有《柳河東集》。"
+            },
+            {
+                name: "白行簡",
+                years: "776—826",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "[唐]代文學家，字[知退]，下邽（今陝西渭南）人，[白居易]之弟。著有文集 10 卷，文辭簡易，以[傳奇]著稱。代表作《李娃傳》《三夢記》，篇幅短小，文辭簡質，情節離奇。"
+            },
+            {
+                name: "元稹",
+                years: "779—831",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[微之]，洛陽（今河南洛陽）人。[唐]代詩人。和[白居易]友善，一同提倡[新樂府運動]，也寫了許多樂府體諷喻詩，世稱「[元白]」，詩作號為「[元和體]」。其樂府詩創作多受張籍、王建的影響，而其「新題樂府」則直接緣於李紳。代表作有詩《菊花》《離思五首》《遣悲懷三首》。所作傳奇《鶯鶯傳》為著名戲曲《西廂記》的前身。有《元氏長慶集》。"
+            },
+            {
+                name: "賈島",
+                years: "779—843",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[浪仙]，一作[閬仙]，范陽（今河北涿州）人。[唐]代詩人。青年時期做過和尚，法號[無本]。後還俗，曾任長江主簿，世稱「[賈長江]」。詩長於[五律]，多寫荒涼枯寂之境，注重煉字煉句。與[孟郊]齊名，有「[郊寒島瘦]」之稱。「[推敲]」典故就是由詩句「[僧敲月下門]」而來。有《長江集》。"
+            },
+            {
+                name: "李賀",
+                years: "790—816",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[長吉]，福昌（今河南宜陽）人。[唐]代詩人。因避父名「晉肅」諱，不得參加進士考試，年僅27歲卒。長於[歌行體]，善於馳騁奇特的想象，運用綺麗的詞語，創造出新奇瑰麗的詩境，是繼[李白]之後的著名[浪漫主義]詩人，有「[詩鬼]」之稱。代表作有《金銅仙人辭漢歌》《雁門太守行》《李憑箜篌引》等，有《昌谷集》。"
+            },
+            {
+                name: "杜牧",
+                years: "803—852",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[牧之]，號[樊川居士]，京兆萬年（今陝西西安）人。[唐]代詩人、文學家。晚年居住在長安城南的樊川別墅，因號[樊川]，後世稱「[杜樊川]」。與[李商隱]並稱「[小李杜]」。善用[絕句]形式諷詠時事，如《赤壁》《過華清宮絕句》；擅長[文賦]，其《阿房宮賦》最為著名，為後世所傳誦。有《樊川文集》。"
+            },
+            {
+                name: "溫庭筠",
+                years: "約 801—866",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "本名[岐]（原名[岐]），字[飛卿]，太原祁（今山西祁縣）人。[唐]代詩人、詞人。精於音律，每入試，押官韻，八叉手而成八韻，時號「[溫八叉]」。工詩，與[李商隱]齊名，時稱「[溫李]」。其詞辭藻華麗，濃艷精緻，內容多寫閨情，為「[花間派]」首要詞人，與[韋莊]齊名，並稱「[溫韋]」。代表作有《荷葉杯》《菩薩蠻》等。後人輯有《溫庭筠詩集》及《金荃詞》。"
+            },
+            {
+                name: "李商隱",
+                years: "約 813—約 858",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[義山]，號[玉谿生]，懷州河內（今河南沁陽）人。[唐]代詩人。因受牛李黨爭排擠，終身不得志。與[杜牧]並稱「[小李杜]」，與[溫庭筠]時稱「[溫李]」。其詩有政治詩、詠史詩、寫景詠物詩和愛情詩，其中[無題詩]是李商隱的獨創，大多以男女愛情相思為題材。代表作有《無題》《賈生》《夜雨寄北》等。有《李義山詩集》。"
+            },
+            {
+                name: "韋莊",
+                years: "約 836—910",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "[唐末五代]詩人。字[端己]，長安杜陵（今陝西西安東南）人。一生經歷可分兩個時期：仕唐時期，創作以詩歌為主，代表作有長篇敘事詩《秦婦吟》，人稱「[秦婦吟秀才]」；仕蜀時期，創作以詞為主，是「[花間派]」中成就較高的詞人，與[溫庭筠]並稱「[溫韋]」。"
+            },
+            {
+                name: "皮日休",
+                years: "約 838—約 883",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[逸少]，後改[襲美]，自號[鹿門子]、[間氣布衣]、[醉吟先生]，襄陽（今屬湖北）人。[唐]代文學家。其詩一部分繼承[白居易]新樂府傳統，語言平易近人；散文辭賦多借古諷今，抒寫憤慨。有《皮子文藪》。"
+            },
+            {
+                name: "馮延巳",
+                years: "903—960",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "一名[延嗣]，字[正中]，廣陵（今江蘇揚州）人。[南唐]詞人。其詞內容多寫男女間的離情別恨，表現士大夫的生活情趣，語言清麗，善於以景見情。有《陽春集》。"
+            },
+            {
+                name: "李煜",
+                years: "937—978",
+                groups: ["EXAM_ALL", "SUI_TANG", "BOOK_ALL"],
+                badge: "P169-174 隋唐五代十國",
+                text: "字[重光]，初名[從嘉]，號[鍾隱]，生於金陵（今江蘇南京）。[南唐]最後一位國君，世稱[南唐後主]、[李後主]。精書法，工繪畫，通音律，詩文尤以[詞]的成就最高。其亡國後詞作更是題材廣闊，含意深沉，被稱為「[千古詞帝]」。代表作有《虞美人》《浪淘沙》等。"
+            },
+
+            // ==================== 二、P158-160 測驗指定北宋古文名家 (7位，連同韓柳共9位) ====================
+            {
+                name: "范仲淹",
+                years: "989—1052",
+                groups: ["EXAM_ALL", "PROSE_9", "BOOK_ALL"],
+                badge: "P158-160 測驗指定作家",
+                text: "字[希文]，諡號[文正]，蘇州吳縣（今江蘇蘇州）人。[北宋]政治家、軍事家、文學家。被貶為鄧州知州時寫了名文《岳陽樓記》。他也擅長作詞，其中的《蘇幕遮》《漁家傲·秋思》，境界壯闊，風格蒼涼，突破了唐末五代詞的綺靡風氣。有《范文正公集》。"
+            },
+            {
+                name: "歐陽修",
+                years: "1007—1072",
+                groups: ["EXAM_ALL", "PROSE_9", "BOOK_ALL"],
+                badge: "P158-160 測驗指定作家",
+                text: "字[永叔]，號[醉翁]，晚年又號[六一居士]，諡號[文忠]，吉州永豐（今江西永豐）人。[北宋]文學家、史學家，[北宋]「[古文運動]」的領袖，「[唐宋八大家]」之一。提倡「[文]」「[道]」並重，反對浮靡文風。所作散文說理暢達，抒情委婉。《六一詩話》開創了「[詩話]」這一新的體裁。名篇有《醉翁亭記》。有《歐陽文忠公文集》。"
+            },
+            {
+                name: "蘇洵",
+                years: "1009—1066",
+                groups: ["EXAM_ALL", "PROSE_9", "BOOK_ALL"],
+                badge: "P158-160 測驗指定作家",
+                text: "字[明允]，號[老泉]，眉州眉山（今四川眉山）人。[北宋]散文家。著有《嘉祐集》，與其子[蘇軾]、[蘇轍]並稱「[三蘇]」，俱在「[唐宋八大家]」之列，名篇有《六國論》。"
+            },
+            {
+                name: "曾鞏",
+                years: "1019—1083",
+                groups: ["EXAM_ALL", "PROSE_9", "BOOK_ALL"],
+                badge: "P158-160 測驗指定作家",
+                text: "字[子固]，南豐（今屬江西）人，世稱「[南豐先生]」。[北宋]政治家、文學家、散文家，「[唐宋八大家]」之一。有《元豐類稿》。"
+            },
+            {
+                name: "王安石",
+                years: "1021—1086",
+                groups: ["EXAM_ALL", "PROSE_9", "BOOK_ALL"],
+                badge: "P158-160 測驗指定作家",
+                text: "字[介甫]，晚號[半山]，官至宰相，封[荊國公]，世稱[王荊公]；諡號[文]，也稱[王文公]，撫州臨川（今屬江西）人。[北宋]政治改革家、思想家、文學家，「[唐宋八大家]」之一。其散文雄健峭拔，名篇有《遊褒禪山記》。有《臨川先生文集》。"
+            },
+            {
+                name: "蘇軾",
+                years: "1037—1101",
+                groups: ["EXAM_ALL", "PROSE_9", "BOOK_ALL"],
+                badge: "P158-160 測驗指定作家",
+                text: "字[子瞻]，號[東坡居士]，諡號[文忠]，眉州眉山（今四川眉山）人。[北宋]文學家、書畫家，與父[蘇洵]、弟[蘇轍]合稱「[三蘇]」，「[唐宋八大家]」之一。元豐三年因「[烏台詩案]」被貶為黃州團練副使，晚年被貶惠州、儋州。蘇軾是[北宋]中期的文壇領袖，其詩題材廣泛，寫景詩和理趣詩最為膾炙人口；其詞開[豪放]一派；其散文著述宏富，豪放自如；亦善書，與[蔡襄]、[黃庭堅]、[米芾]並稱「[宋四家]」；工於畫，尤擅墨竹、怪石、枯木等。有《東坡七集》《東坡樂府》等傳世。"
+            },
+            {
+                name: "蘇轍",
+                years: "1039—1112",
+                groups: ["EXAM_ALL", "PROSE_9", "BOOK_ALL"],
+                badge: "P158-160 測驗指定作家",
+                text: "字[子由]，號[潁濱遺老]，眉州眉山（今四川眉山）人。[北宋]散文家。與父[蘇洵]、兄[蘇軾]合稱「[三蘇]」，「[唐宋八大家]」之一。作品以議論文為主，文章汪洋恣肆，說理清晰有力。代表作有《上樞密韓太尉書》《黃州快哉亭記》。有《欒城集》。"
+            },
+
+            // ==================== 三、同頁其他作家擴充收錄 (共 16 位) ====================
+            {
+                name: "鍾嶸",
+                years: "生卒年不詳",
+                groups: ["BOOK_ALL"],
+                badge: "課本同頁擴充 (南朝梁)",
+                text: "字[仲偉]，潁川長社（今屬河南）人。[南朝梁]文學批評家。著有我國第一部詩歌理論專著《詩品》，品評自漢至梁 120 多位詩人。"
+            },
+            {
+                name: "王禹偁",
+                years: "954—1001",
+                groups: ["BOOK_ALL"],
+                badge: "課本同頁擴充 (宋代)",
+                text: "[宋]代詩人、散文家。字[元之]，濟州巨野（今山東巨野）人。[北宋]詩文革新運動的奠基者，提倡平易樸素的文風，從理論和創作上體現了[現實主義]精神。代表作有詩歌《村行》、詞作《點絳唇》、散文《黃州新建小竹樓記》等。"
+            },
+            {
+                name: "林逋",
+                years: "967—1029",
+                groups: ["BOOK_ALL"],
+                badge: "課本同頁擴充 (宋代)",
+                text: "字[君復]，錢塘（今浙江杭州）人，有「[梅妻鶴子]」之稱，卒諡「[和靖先生]」。[北宋]詩人。代表作有詠梅詩《山園小梅》。有《林和靖詩集》。"
+            },
+            {
+                name: "柳永",
+                years: "約 987—約 1053",
+                groups: ["BOOK_ALL"],
+                badge: "課本同頁擴充 (宋代)",
+                text: "字[耆卿]，原名[三變]，因排行第七，人稱[柳七]，又曾官至屯田員外郎，世稱「[柳屯田]」，崇安（今福建武夷山）人。[北宋]第一個專業詞人。為人放蕩不羈，終身潦倒，長於抒寫羈旅行役之情。名篇有《雨霖鈴》。有《樂章集》。"
+            },
+            {
+                name: "晏殊",
+                years: "991—1055",
+                groups: ["BOOK_ALL"],
+                badge: "課本同頁擴充 (宋代)",
+                text: "字[同叔]，撫州臨川（今江西撫州）人。[北宋]詞人。名作有《踏莎行》《浣溪沙》。"
+            },
+            {
+                name: "宋祁",
+                years: "998—1061",
+                groups: ["BOOK_ALL"],
+                badge: "課本同頁擴充 (宋代)",
+                text: "字[子京]，諡[景文]。[北宋]文學家、史學家。曾遷工部尚書，因詞《玉樓春》中有「[紅杏枝頭春意鬧]」句，遂有「[紅杏尚書]」之稱。有《宋景文集》《宋景文公長短句》。"
+            },
+            {
+                name: "周敦頤",
+                years: "1017—1073",
+                groups: ["BOOK_ALL"],
+                badge: "課本同頁擴充 (宋代)",
+                text: "字[茂叔]，號[濂溪]，世稱[濂溪先生]，道州營道（今湖南道縣）人。[北宋]哲學家，宋朝[理學]的開山鼻祖，著名理學家程頤、程顥都是他的學生。他正式提出了「[文以載道]」之說。《愛蓮說》為其散文代表作。"
+            },
+            {
+                name: "司馬光",
+                years: "1019—1086",
+                groups: ["BOOK_ALL"],
+                badge: "課本同頁擴充 (宋代)",
+                text: "字[君實]，陝州夏縣涑水鄉（今屬山西）人，世稱[涑水先生]。[北宋]史學家、文學家。官至宰相，追封[溫國公]，諡[文正]。有《溫國文正司馬公文集》。用 19 年的時間主編了我國最大的一部[編年體通史]《資治通鑑》，宋神宗以其「鑑於往事，有資於治道」賜此書名。"
+            },
+            {
+                name: "晏幾道",
+                years: "1038—1110",
+                groups: ["BOOK_ALL"],
+                badge: "課本同頁擴充 (宋代)",
+                text: "字[叔原]，號[小山]，[晏殊]之子，撫州臨川（今屬江西）人，與父合稱「[二晏]」。[北宋]詞人。其詞絕大部分是小令，題材多愛情別離之類，感情真摯，清麗婉轉。有《小山詞》。"
+            },
+            {
+                name: "沈括",
+                years: "1031—1095",
+                groups: ["BOOK_ALL"],
+                badge: "課本同頁擴充 (宋代)",
+                text: "字[存中]，錢塘（今浙江杭州）人。[北宋]科學家、政治家。他的《夢溪筆談》是用[筆記文學]體裁寫成的綜合性學術專著，是我國第一部科學作品。"
+            },
+            {
+                name: "黃庭堅",
+                years: "1045—1105",
+                groups: ["BOOK_ALL"],
+                badge: "課本同頁擴充 (宋代)",
+                text: "字[魯直]，號[山谷道人]，晚號[涪翁]，洪州分寧（今江西修水）人。[北宋]詩人、詞人、書法家。[江西詩派]開山之祖。與[秦觀]、[晁補之]、[張耒]合稱「[蘇門四學士]」。詩與[蘇軾]並稱「[蘇黃]」，有《豫章黃先生文集》。詞與[秦觀]齊名，有《山谷琴趣外篇》。書法精妙，「[宋四家]」之一。"
+            },
+            {
+                name: "秦觀",
+                years: "1049—1100",
+                groups: ["BOOK_ALL"],
+                badge: "課本同頁擴充 (宋代)",
+                text: "字[少游]，一字[太虛]，號[淮海居士]，高郵（今屬江蘇）人。[北宋]詞人。他的詞多寫男女愛情和身世感傷，風格清婉秀麗，是[婉約派]的代表性詞人之一。《鵲橋仙》一詞情感真摯純潔，為愛情詞傑作。有《淮海集》。"
+            },
+            {
+                name: "賀鑄",
+                years: "1052—1125",
+                groups: ["BOOK_ALL"],
+                badge: "課本同頁擴充 (宋代)",
+                text: "字[方回]，號[慶湖遺老]，衛州（今屬河南）人，[北宋]詞人。其詞剛柔兼濟，風格多樣。代表作為《青玉案》（凌波不過橫塘路）《生查子·陌上郎》等。"
+            },
+            {
+                name: "周邦彥",
+                years: "1056—1121",
+                groups: ["BOOK_ALL"],
+                badge: "課本同頁擴充 (宋代)",
+                text: "字[美成]，號[清真居士]，錢塘（今浙江杭州）人，[北宋]詞人。詩、詞、文、賦，無所不擅。其詞作音律嚴整，格調精工，又多創調。舊時詞論稱他為「[詞家之冠]」，被尊為[婉約派]的集大成者和[格律派]的創始人。今存《片玉詞》10卷。"
+            },
+            {
+                name: "李清照",
+                years: "1084—約 1151",
+                groups: ["BOOK_ALL"],
+                badge: "課本同頁擴充 (宋代)",
+                text: "號[易安居士]，濟南（今山東濟南）人。[宋]代女詞人。前期詞作多寫悠閒的生活，後期多慨嘆身世，有時也流露出對中原的懷念。其詞善用[白描]手法，自闢蹊徑，語言清麗，被稱為「[易安體]」。《如夢令》《聲聲慢》選自《漱玉詞》，另有《李清照集》。"
+            },
+            {
+                name: "岳飛",
+                years: "1103—1142",
+                groups: ["BOOK_ALL"],
+                badge: "課本同頁擴充 (宋代)",
+                text: "字[鵬舉]，[宋]代抗金名將，孝宗時追諡[武穆]，後改諡[忠武]。其精忠報國的精神深為後人所敬佩。留有《岳武穆集》，存詞 3 首（名篇有《滿江紅》）。"
+            }
+        ];
+
+        let activeDeck = [];
+        let currentRoundCards = [];
+        let wrongCardsForNextRound = [];
+        let currentIndex = 0;
+        let currentCard = null;
+        let isAnswered = false;
+
+        // DOM 元素引用
+        const authorNameEl = document.getElementById('author-name');
+        const authorYearsEl = document.getElementById('author-years');
+        const periodBadgeEl = document.getElementById('period-badge');
+        const statusBadgeEl = document.getElementById('status-badge');
+        const fullTextClozeEl = document.getElementById('full-text-cloze');
+        const progressTextEl = document.getElementById('progress-text');
+        const deckSelectorEl = document.getElementById('deck-selector');
+
+        const btnReveal = document.getElementById('btn-reveal');
+        const btnRemembered = document.getElementById('btn-remembered');
+        const btnForgot = document.getElementById('btn-forgot');
+
+        const flashcardArea = document.getElementById('flashcard-area');
+        const actionButtons = document.getElementById('action-buttons');
+        const resultArea = document.getElementById('result-area');
+        const resultTitle = document.getElementById('result-title');
+        const resultDesc = document.getElementById('result-desc');
+        const resultBtn = document.getElementById('result-btn');
+
+        // 洗牌演算法
+        function shuffle(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // 將課本原文中的 [考點] 與 《作品》 轉換為互動式填空 DOM（無左側空白）
+        function buildClozeNodes(rawText) {
+            const container = document.createDocumentFragment();
+            const regex = /(\[[^\]]+\]|《[^》]+》)/g;
+            let lastIndex = 0;
+            let match;
+
+            while ((match = regex.exec(rawText)) !== null) {
+                if (match.index > lastIndex) {
+                    container.appendChild(document.createTextNode(rawText.slice(lastIndex, match.index)));
+                }
+                const token = match[0];
+                const span = document.createElement('span');
+
+                if (token.startsWith('[')) {
+                    const cleanVal = token.slice(1, -1);
+                    span.className = 'cloze-blank';
+                    span.dataset.answer = cleanVal;
+                    span.dataset.placeholder = '＿＿';
+                    span.textContent = '＿＿';
+                    span.title = '點擊單獨翻開此格';
+                } else {
+                    span.className = 'cloze-work';
+                    span.dataset.answer = token;
+                    span.dataset.placeholder = '《＿＿》';
+                    span.textContent = '《＿＿》';
+                    span.title = '點擊單獨翻開此作品';
+                }
+
+                span.addEventListener('click', function() {
+                    const isNowRevealed = this.classList.toggle('revealed');
+                    this.textContent = isNowRevealed ? this.dataset.answer : this.dataset.placeholder;
+                });
+
+                container.appendChild(span);
+                lastIndex = regex.lastIndex;
+            }
+
+            if (lastIndex < rawText.length) {
+                container.appendChild(document.createTextNode(rawText.slice(lastIndex)));
+            }
+
+            return container;
+        }
+
+        // 切換測驗範圍
+        function changeDeck() {
+            const mode = deckSelectorEl.value;
+            activeDeck = rawAuthors.filter(item => item.groups.includes(mode));
+            startNewRound(activeDeck);
+        }
+
+        // 初始化
+        function initGame() {
+            changeDeck();
+        }
+
+        // 啟動新一輪
+        function startNewRound(cards) {
+            currentRoundCards = shuffle(cards);
+            wrongCardsForNextRound = [];
+            currentIndex = 0;
+
+            flashcardArea.classList.remove('hidden');
+            actionButtons.classList.remove('hidden');
+            resultArea.classList.add('hidden');
+
+            showFront();
+        }
+
+        // 顯示題目正面（挖空狀態）
+        function showFront() {
+            isAnswered = false;
+            currentCard = currentRoundCards[currentIndex];
+            progressTextEl.innerText = currentRoundCards.length - currentIndex;
+
+            authorNameEl.innerText = currentCard.name;
+            authorYearsEl.innerText = `（${currentCard.years}）`;
+            periodBadgeEl.innerText = currentCard.badge;
+
+            statusBadgeEl.innerText = "🔒 填空待作答（可點擊單格偷看或按下方顯示答案）";
+            statusBadgeEl.className = "px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold tracking-wider";
+
+            fullTextClozeEl.innerHTML = '';
+            fullTextClozeEl.appendChild(buildClozeNodes(currentCard.text));
+
+            btnRemembered.classList.add('hidden');
+            btnForgot.classList.add('hidden');
+            btnReveal.classList.remove('hidden');
+        }
+
+        // 顯示全部答案
+        function showAnswer() {
+            isAnswered = true;
+
+            statusBadgeEl.innerText = "🔓 答案已全部顯示（請核對您的記憶是否完整）";
+            statusBadgeEl.className = "px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold tracking-wider";
+
+            document.querySelectorAll('.cloze-blank, .cloze-work').forEach(el => {
+                el.classList.add('revealed');
+                el.textContent = el.dataset.answer;
+            });
+
+            btnReveal.classList.add('hidden');
+            btnRemembered.classList.remove('hidden');
+            btnForgot.classList.remove('hidden');
+        }
+
+        // 自我評估處理
+        function handleEvaluation(remembered) {
+            if (!remembered) {
+                wrongCardsForNextRound.push(currentCard);
+            }
+
+            currentIndex++;
+            if (currentIndex >= currentRoundCards.length) {
+                showRoundResult();
+            } else {
+                showFront();
+            }
+        }
+
+        // 錯題循環輪次
+        function startNextRound() {
+            startNewRound(wrongCardsForNextRound);
+        }
+
+        // 本輪結算畫面
+        function showRoundResult() {
+            flashcardArea.classList.add('hidden');
+            actionButtons.classList.add('hidden');
+            resultArea.classList.remove('hidden');
+
+            if (wrongCardsForNextRound.length === 0) {
+                document.getElementById('result-icon').innerText = "🎉";
+                resultTitle.innerText = "太完美了！全數掌握！";
+                resultTitle.className = "text-3xl md:text-4xl font-black text-emerald-600 mb-4 tracking-wider";
+                resultDesc.innerText = `您已經將本範圍內所有作家的朝代流派、字號世稱、並稱與代表作品全部牢記於心！`;
+                resultBtn.innerText = "重新挑戰本範圍";
+                resultBtn.onclick = () => startNewRound(activeDeck);
+            } else {
+                document.getElementById('result-icon').innerText = "📖";
+                resultTitle.innerText = "本輪特訓結束";
+                resultTitle.className = "text-3xl md:text-4xl font-black text-indigo-950 mb-4 tracking-wider";
+                resultDesc.innerHTML = `您還有 <span class="text-3xl font-black text-rose-600 mx-2">${wrongCardsForNextRound.length}</span> 位作家的字號、並稱或作品不夠熟練。<br><br>系統已自動將他們收錄進錯題本，讓我們立即展開錯題循環特訓！`;
+                resultBtn.innerText = "進入錯題複習 ➔";
+                resultBtn.onclick = startNextRound;
+            }
+        }
+
+        // 支援空白鍵快速翻開答案
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !resultArea.classList.contains('flex') && resultArea.classList.contains('hidden')) {
+                if (!isAnswered) {
+                    e.preventDefault();
+                    showAnswer();
+                }
+            }
+        });
+
+        window.onload = initGame;
+    </script>
+</body>
+</html>
